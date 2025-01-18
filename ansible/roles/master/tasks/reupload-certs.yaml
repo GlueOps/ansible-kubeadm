@@ -1,0 +1,4 @@
+- name: Reupload certs
+  ansible.builtin.shell: |
+    kubeadm init phase upload-certs --upload-certs --config={{ kubeadm_config_file }}
+  tags: upload-certs

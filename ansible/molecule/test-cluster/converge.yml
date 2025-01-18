@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks: []
+
+- name: Include setup-cluster playbook
+  ansible.builtin.import_playbook: ../../playbooks/setup-cluster.yaml
+

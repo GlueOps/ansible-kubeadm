@@ -1,0 +1,40 @@
+- name: Cordon Nodes
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    kubectl cordon {{ item }}
+  with_items: "{{ nodes_to_remove.stdout }}"
+  when: nodes_to_remove.stdout is defined
+
+- name: Drain Nodes
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    kubectl drain {{ item }} --ignore-daemonsets  --delete-emptydir-data 
+  with_items: "{{ nodes_to_remove.stdout }}"
+  when: nodes_to_remove.stdout is defined
+
+- name: Delete Nodes
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    kubectl delete node {{ item }} 
+  with_items: "{{ nodes_to_remove.stdout }}"
+  when: nodes_to_remove.stdout is defined
+
+- name: Remove etcd members only if it's control plane node
+  ansible.builtin.shell: |
+    export ETCDCTL_API=3
+    ETCD_MEMBER_ID=$(etcdctl --endpoints={{ etcd_nodes_endpoints }} \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key \
+      member list | grep {{ item }} | awk '{print $1}' | tr -d ',' )
+    
+    etcdctl --endpoints={{ etcd_nodes_endpoints }} \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key \
+      member remove $ETCD_MEMBER_ID
+
+  with_items: "{{ nodes_to_remove.stdout }}"
+  when: 
+    - inventory_hostname == groups['masters'][0] and nodes_to_remove.stdout is defined
+    - item is search("master-node-*")

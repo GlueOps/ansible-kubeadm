@@ -1,0 +1,169 @@
+---
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: overlay
+    state: present
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Apply sysctl settings
+  ansible.posix.sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+
+- name: Disable swap
+  ansible.posix.sysctl:
+    name: vm.swappiness
+    value: 0
+
+- name: Install dependencies for containerd
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+      - gpg
+      - curl
+      - apt-transport-https
+      - ca-certificates
+    state: present
+
+- name: Create directory for Docker's GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Docker's official GPG key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /etc/apt/keyrings/docker.gpg
+    state: present
+
+- name: Print architecture variables
+  ansible.builtin.debug:
+    msg: "Architecture: {{ ansible_architecture }}, Codename: {{ ansible_lsb.codename }}"
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
+      https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+    filename: docker
+    state: present
+
+- name: Install containerd
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Add Docker group
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add user to Docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Enable and start Docker services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - docker.service
+    - containerd.service
+
+- name: Create containerd configuration directory
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+
+- name: Generate containerd default configuration
+  ansible.builtin.command: containerd config default
+  register: containerd_config
+
+- name: Save the join command to a file
+  ansible.builtin.copy:
+    content: "{{ containerd_config.stdout }}"
+    dest: /etc/containerd/config.toml
+    mode: "0755"
+
+- name: Enable SystemdCgroup in containerd configuration
+  ansible.builtin.lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: '^(\s*)SystemdCgroup\s*=\s*false'
+    line: '\1SystemdCgroup = true'
+    backrefs: true
+
+- name: Reload systemd and enable containerd
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: restarted
+
+- name: Download Kubernetes GPG key
+  ansible.builtin.apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key
+    keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: present
+
+# sign the keyring
+- name: Sign the Kubernetes keyring
+  ansible.builtin.command: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg]
+      https://pkgs.k8s.io/core:/stable:/v1.32/deb /
+    filename: kubernetes
+    state: present
+
+- name: Update package list and install kube components
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    allow_unauthenticated: true
+
+- name: Hold kube packages
+  ansible.builtin.dpkg_selections:
+    name: kubelet
+    selection: hold
+- name: Hold kube packages
+  ansible.builtin.dpkg_selections:
+    name: kubeadm
+    selection: hold
+- name: Hold kube packages
+  ansible.builtin.dpkg_selections:
+    name: kubectl
+    selection: hold
+
+- name: Enable kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+    state: started
+
+# install wireguard
+- name: Install wireguard
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+  tags: install_wireguard

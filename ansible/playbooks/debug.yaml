@@ -1,0 +1,11 @@
+- name: Taint Nodes
+  hosts: master-node-1
+  become: true
+  tasks:
+    - name: Taint all nodes
+      ansible.builtin.include_role:
+        name: master
+        tasks_from: taint-nodes.yaml
+      vars:
+        values: "{{ hostvars| dict2items | community.general.json_query(\"[?starts_with(key, 'master') 
+          || starts_with(key, 'worker')].{host:key,extra:value.extra}\")  }}"

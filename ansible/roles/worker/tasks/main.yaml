@@ -1,0 +1,10 @@
+- name: Prepare node
+  ansible.builtin.import_tasks: prepare-nodes.yaml
+  when: inventory_hostname in groups['workers']
+
+- name: Copy join command
+  ansible.builtin.import_tasks: copy-join-command.yaml
+
+- name: Join Worker nodes
+  ansible.builtin.import_tasks: join-nodes.yaml
+  # when: inventory_hostname in groups['workers']

@@ -1,0 +1,29 @@
+---
+# list current nodes
+- name: List current nodes
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    kubectl get nodes --no-headers -o custom-columns=":metadata.name"
+  tags: join_worker
+  register: current_cluster_nodes
+  when: inventory_hostname == groups['masters'][0]
+
+# debug
+- name: List of nodes will join the cluster
+  ansible.builtin.debug:
+    var: inventory_hostname
+  when: inventory_hostname in groups['workers'] and inventory_hostname not in hostvars[groups['masters'][0]]['current_cluster_nodes'].stdout
+  tags: join_worker
+
+# reset the nodes before joining
+- name: Reset the worker node
+  ansible.builtin.command: kubeadm reset -f
+  tags: join_worker
+  when: inventory_hostname in groups['workers'] and inventory_hostname not in hostvars[groups['masters'][0]]['current_cluster_nodes'].stdout
+
+- name: Join the worker node to the Kubernetes cluster
+  ansible.builtin.command: sh /opt/token.sh
+  args:
+    creates: /opt/kubernetes/join_command.sh
+  tags: join_worker
+  when: inventory_hostname in groups['workers'] and inventory_hostname not in hostvars[groups['masters'][0]]['current_cluster_nodes'].stdout

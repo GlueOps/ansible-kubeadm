@@ -1,0 +1,4 @@
+# reset the nodes before joining
+- name: Reset the worker node
+  ansible.builtin.shell: |
+    kubeadm reset -f --cleanup-tmp-dir -v=5

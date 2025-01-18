@@ -1,0 +1,6 @@
+---
+- name: Deploy HAProxy Load Balancer for Kubernetes
+  hosts: loadbalancer
+  become: true
+  roles:
+    - loadbalancer

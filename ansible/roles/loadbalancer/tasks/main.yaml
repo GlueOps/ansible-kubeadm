@@ -1,0 +1,46 @@
+---
+- name: Install HAProxy
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+
+- name: Generate HAProxy configuration
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ haproxy_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart HAProxy
+  when: inventory_hostname == groups['loadbalancer'][0]
+
+- name: Generate HAProxy configuration for Pomerium Ingress
+  ansible.builtin.template:
+    src: haproxy-for-pomerium-ingress.cfg.j2
+    dest: "{{ haproxy_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart HAProxy
+  when: inventory_hostname == groups['loadbalancer'][2]
+
+- name: Generate HAProxy configuration for Nginx ingress
+  ansible.builtin.template:
+    src: haproxy-for-nginx-ingress.cfg.j2
+    dest: "{{ haproxy_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart HAProxy
+  when: inventory_hostname == groups['loadbalancer'][1]
+
+- name: Enable and start HAProxy
+  ansible.builtin.systemd_service:
+    name: haproxy
+    enabled: true
+    state: restarted
+
+- name: Restart HAProxy
+  ansible.builtin.systemd_service:
+    name: haproxy
+    state: restarted
