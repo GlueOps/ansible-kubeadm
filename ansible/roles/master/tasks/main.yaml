@@ -1,0 +1,31 @@
+---
+- name: Prepare node
+  ansible.builtin.import_tasks: prepare-nodes.yaml
+  tags: prepare-nodes
+
+- name: Init kubeadm
+  ansible.builtin.import_tasks: kubeadm-init.yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: init_kubeadm
+
+- name: Copy join command
+  ansible.builtin.import_tasks: copy-join-command.yaml
+
+- name: Join nodes
+  ansible.builtin.import_tasks: join-nodes.yaml
+  tags: join_nodes
+
+- name: Install addons
+  ansible.builtin.import_tasks: install-addons.yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: install_addons
+
+- name: Install calico CNI
+  ansible.builtin.import_tasks: install-calico.yaml
+  when: inventory_hostname == groups['masters'][0] and cni_type == "calico"
+  tags: install_calico
+
+- name: Install cilium CNI
+  ansible.builtin.import_tasks: install-cilium.yaml
+  when: inventory_hostname == groups['masters'][0] and cni_type == "cilium"
+  tags: install_cilium

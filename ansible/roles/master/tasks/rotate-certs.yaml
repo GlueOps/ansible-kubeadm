@@ -1,0 +1,40 @@
+- name: Rotate certs
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    kubeadm certs renew all
+  tags: rotate-certs
+
+- name: Ensure destination directory exists
+  ansible.builtin.file:
+    path: /opt/kubernetes/manifests
+    state: directory
+    mode: '0755'
+  tags: rotate-certs
+  
+- name: remove static pods 
+  ansible.builtin.shell: |
+    export KUBECONFIG=/opt/kubernetes/.kube/config
+    mv  /etc/kubernetes/manifests/* /opt/kubernetes/manifests/
+  tags: rotate-certs
+
+- name: Check if containers still exist
+  ansible.builtin.shell: "ctr -n k8s.io containers list  | grep -E 'kube-apiserver|etcd|kube-scheduler|kube-controller-manager' || true"
+  register: list_containers
+  retries: 5
+  delay: 20
+  until: list_containers.stdout == ""
+  tags: rotate-certs
+
+
+- name: recreate static pods 
+  ansible.builtin.shell: |
+    mv /opt/kubernetes/manifests/* /etc/kubernetes/manifests/
+  tags: rotate-certs
+
+- name: Check if containers got recreated
+  ansible.builtin.shell: "ctr -n k8s.io containers list  | grep -E 'kube-apiserver|etcd|kube-scheduler|kube-controller-manager' || true"
+  register: list_containers
+  retries: 5
+  delay: 20
+  until: list_containers.stdout != ""
+  tags: rotate-certs

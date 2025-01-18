@@ -1,0 +1,19 @@
+certificate_key: "{{ lookup('env', 'CERTIFICATE_KEY') }}"
+random_token: "{{ lookup('env', 'RANDOM_TOKEN') }}"
+
+kubeadm_config_file: "/etc/kubernetes/kubeadm-config.yaml" 
+cni_type: calico # calico, cilium
+service_subnet: "192.168.0.0/16" # if you change this, you need to change the calico.yaml file
+
+# calico
+calico_node_to_node_encryption: false
+calico_encapsulation_mode: "vxlan"
+
+nodes: |
+  {% for host in groups['masters'] %}
+  {{ hostvars[host]['ansible_host'] }}:2379{% if not loop.last %},{% endif %}
+  {% endfor %}
+
+etcd_nodes_endpoints: "{{ nodes | trim}}"
+
+kubeconfig_export_path: "./.kube/config"

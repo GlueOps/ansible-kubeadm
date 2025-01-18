@@ -1,0 +1,18 @@
+---
+haproxy_config_path: "/etc/haproxy/haproxy.cfg"
+masters: |
+  {% for host in groups['masters'] %}
+  {{ hostvars[host]['ip'] }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+
+workers: |
+  {% for host in groups['workers'] %}
+  {{ hostvars[host]['ip'] }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+
+
+k8s_masters: "{{ masters | trim | split(',') }}"
+k8s_workers: "{{ workers | trim | split(',') }}"
+
+enable_nginx_ingress: false
+enable_pomerium_ingress: false

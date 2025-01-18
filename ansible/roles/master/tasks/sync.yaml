@@ -1,0 +1,27 @@
+---
+- name: Compare resources
+  ansible.builtin.import_tasks: compare-node.yaml
+  when: inventory_hostname == groups['masters'][0]
+
+- name: Check if resources are in sync
+  fail:
+    msg: "All resources are synced"
+  when: hostvars[groups['masters'][0]]['nodes_to_add'].stdout == "[]" and hostvars[groups['masters'][0]]['nodes_to_remove'].stdout == "[]"
+  run_once: true
+  delegate_to: localhost
+
+- name: Confirm control-plane nodes are odd
+  fail:
+    msg: "Control-plane nodes must be odd"
+  when: (groups['masters'] | length) % 2 == 0
+  run_once: true
+  delegate_to: localhost
+
+#scale up
+- name: Scale down nodes
+  ansible.builtin.import_tasks: scale-up.yaml
+
+# scale down
+- name: Scale down nodes
+  ansible.builtin.import_tasks: scale-down.yaml
+  when: hostvars[groups['masters'][0]]['nodes_to_remove'].stdout != "[]" and inventory_hostname == groups['masters'][0]

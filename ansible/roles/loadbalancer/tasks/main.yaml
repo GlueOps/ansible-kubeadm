@@ -1,0 +1,17 @@
+---
+- name: Lb for Control Plane
+  ansible.builtin.import_tasks: configure_k8s_lb.yaml
+  when:
+    - inventory_hostname == groups['loadbalancer'][0]
+
+- name: Lb for Ingress Cluster
+  ansible.builtin.import_tasks: configure_nginx_ingress.yaml
+  when:
+    - enable_nginx_ingress
+    - inventory_hostname == groups['loadbalancer'][1]
+
+- name: Lb for Pomerium Ingress
+  ansible.builtin.import_tasks: configure_pomerium_ingress.yaml
+  when:
+    - enable_pomerium_ingress
+    - inventory_hostname == groups['loadbalancer'][2]
