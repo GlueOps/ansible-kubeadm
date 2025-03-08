@@ -136,7 +136,9 @@ ansible all -i inventory/hosts.yaml -m ping
 
 Now to create the cluster, run:
 
-`ansible-playbook -i inventory/hosts.yaml playbooks/setup-cluster.yaml`
+```bash
+ansible-playbook -i inventory/hosts.yaml playbooks/setup-cluster.yaml
+```
 
 after the playbook run successfully, you will see a kubeconfig file in `ansible/playbooks/.kube/config`
 
@@ -227,7 +229,9 @@ workers:
 
 Now to run the syncing process, use the following command:
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/sync-resources.yaml`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/sync-resources.yaml
+```
 
 you will prompted with following message:
 
@@ -258,17 +262,23 @@ to verify, run :
 
 ## Rotate Certs
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags rotate-certs`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags rotate-certs
+```
 
 
 ## Upgrade Version
 
 this will update the whole cluster versions(NOT tested)
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags upgrade`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags upgrade
+```
 
 
 ## OS Security Patch
 
 to patch os with the security patches run :
-`ansible-playbook  -i inventory/hosts.yaml playbooks/os-patch.yaml`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/os-patch.yaml
+```
