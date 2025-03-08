@@ -115,9 +115,11 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 
 create a file `.env` and add  the following secrets:
 
-`RANDOM_TOKEN`: the format of token must be like the following: abcdef.abcdef0123456789
+```bash
+RANDOM_TOKEN="abcdef.abcdef0123456789" # the format of token must be like the following: abcdef.abcdef0123456789
+CERTIFICATE_KEY="57fa5f6ec9cc9c6ea4116c3966bb5324ce47a6b926915766a619b5fb3af0426e" # The certificate key is a hex encoded string that is an AES key of size 32 bytes. you can use [https://www.electricneutron.com/encryption-key-generator/] and choose AES 256 bit(HEX).
 
-`CERTIFICATE_KEY`: The certificate key is a hex encoded string that is an AES key of size 32 bytes. you can use [https://www.electricneutron.com/encryption-key-generator/] and choose AES 256 bit(HEX).
+```
 
 then to allow ansible noticing the .env file, we need to export it like the following: 
 
