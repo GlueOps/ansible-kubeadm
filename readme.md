@@ -80,6 +80,14 @@ ssh_authorized_keys:
     - public_key
 ```
 
+take the private key and create 3 copies of it under the `ansible/` folder:
+
+```
+ansible/keys/lb_node
+ansible/keys/master_node
+ansible/keys/worker_node
+```
+
 then move into terraform folder and because we're using hetzner to create Vms, create a file .tfvars and add the following:
 
 `hcloud_token = "XXXXXX"`
@@ -100,20 +108,37 @@ Now after you got `hosts.yaml`
 
 move into the `ansible` folder and run the following commands
 
-`export ANSIBLE_ROLES_PATH=$PWD/roles`
-`export ANSIBLE_HOST_KEY_CHECKING=False`
+```bash
+export ANSIBLE_ROLES_PATH=$PWD/roles
+export ANSIBLE_HOST_KEY_CHECKING=False
+```
 
 create a file `.env` and add  the following secrets:
 
-`RANDOM_TOKEN`: the format of token must be like the following: abcdef.abcdef0123456789
+```bash
+RANDOM_TOKEN="abcdef.abcdef0123456789" # the format of token must be like the following: abcdef.abcdef0123456789
+CERTIFICATE_KEY="57fa5f6ec9cc9c6ea4116c3966bb5324ce47a6b926915766a619b5fb3af0426e" # The certificate key is a hex encoded string that is an AES key of size 32 bytes. you can use [https://www.electricneutron.com/encryption-key-generator/] and choose AES 256 bit(HEX).
 
-`CERTIFICATE_KEY`: The certificate key is a hex encoded string that is an AES key of size 32 bytes. you can use [https://www.electricneutron.com/encryption-key-generator/] and choose AES 256 bit(HEX).
+```
 
-then to allow ansible noticing the .env file, we need to export it like the following: `export $(grep -v '^#' .env | xargs)`
+then to allow ansible noticing the .env file, we need to export it like the following: 
+
+```bash
+export $(grep -v '^#' .env | xargs)
+```
+
+
+Test connectivity with:
+
+```
+ansible all -i inventory/hosts.yaml -m ping
+```
 
 Now to create the cluster, run:
 
-`ansible-playbook -i inventory/hosts.yaml playbooks/setup-cluster.yaml`
+```bash
+ansible-playbook -i inventory/hosts.yaml playbooks/setup-cluster.yaml
+```
 
 after the playbook run successfully, you will see a kubeconfig file in `ansible/playbooks/.kube/config`
 
@@ -204,7 +229,9 @@ workers:
 
 Now to run the syncing process, use the following command:
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/sync-resources.yaml`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/sync-resources.yaml
+```
 
 you will prompted with following message:
 
@@ -235,17 +262,23 @@ to verify, run :
 
 ## Rotate Certs
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags rotate-certs`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags rotate-certs
+```
 
 
 ## Upgrade Version
 
 this will update the whole cluster versions(NOT tested)
 
-`ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags upgrade`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/upgrade-cluster.yaml --tags upgrade
+```
 
 
 ## OS Security Patch
 
 to patch os with the security patches run :
-`ansible-playbook  -i inventory/hosts.yaml playbooks/os-patch.yaml`
+```bash
+ansible-playbook  -i inventory/hosts.yaml playbooks/os-patch.yaml
+```
