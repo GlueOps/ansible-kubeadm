@@ -9,8 +9,7 @@ users:
   - name: cluster
     groups: sudo
     ssh_authorized_keys:
-      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJKrQycqh5b4YFUZR/MAXJfW6RtM7ACJ/Pj3lekakRX forswearbeetle@forswearbeetle-20jns4b400
-
+      - public_key
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
 write_files:
