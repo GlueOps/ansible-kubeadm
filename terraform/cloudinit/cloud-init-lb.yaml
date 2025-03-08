@@ -11,8 +11,7 @@ users:
     groups:
       - sudo
     ssh_authorized_keys:
-      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYRo0ugXsQ6XL7ZwzhbRMvgmiegIQbs64QNZm7Q1m7M forswearbeetle@forswearbeetle-20jns4b400
-
+      - public_key
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
 write_files:
